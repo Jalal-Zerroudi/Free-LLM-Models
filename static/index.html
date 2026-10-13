@@ -103,6 +103,12 @@
   </section>
 
   <section id="tab-providers" class="hidden">
+    <div class="toolbar">
+      <button class="btn" id="copyProviders" type="button">Copier la liste (JSON)</button>
+      <span class="muted">Les clés API restent masquées.</span>
+    </div>
+    <textarea id="providersJson" class="hidden" readonly rows="12"
+      style="width:100%; margin-bottom:14px; font:12px ui-monospace, Consolas, monospace"></textarea>
     <div class="grid" id="providerCards"></div>
 
     <div class="card" style="margin-top:18px; max-width:560px">
@@ -303,6 +309,44 @@ document.getElementById('addForm').addEventListener('submit', async e => {
     f.reset(); toast('Fournisseur ajouté. Cliquez sur « Tester ce fournisseur » pour découvrir ses modèles.');
     await loadAll();
   } catch (err) { toast(err.message, true); }
+});
+
+function providersJson() {
+  return JSON.stringify(settings.map(p => {
+    const st = stats[p.name] || {};
+    return {
+      name: p.name, kind: p.kind, host: p.host, configured: p.configured,
+      api_key: p.key_set ? p.key_masked : null, key_source: p.key_source,
+      models: st.total ?? 0, passed: st.passed ?? 0, verified_free: st.verified_free ?? 0,
+      last_verified_at: st.last_verified_at ?? null,
+    };
+  }), null, 2);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return; } catch { /* repli ci-dessous */ }
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.style.position = 'fixed'; area.style.opacity = '0';
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand('copy');
+  area.remove();
+  if (!ok) throw new Error('le navigateur a refusé l\'accès au presse-papiers');
+}
+
+document.getElementById('copyProviders').addEventListener('click', async () => {
+  const json = providersJson(), box = document.getElementById('providersJson');
+  try {
+    await copyText(json);
+    box.classList.add('hidden');
+    toast(`${settings.length} fournisseurs copiés en JSON.`);
+  } catch {
+    box.value = json;
+    box.classList.remove('hidden');
+    box.focus(); box.select();
+    toast('Copie automatique bloquée : le JSON est sélectionné, faites Ctrl+C.', true);
+  }
 });
 
 /* ---------------------------------------------------------------- Refresh */
