@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free LLM Models</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #667085; --line: #e4e7ec;
+    --accent: #2f6fed; --ok: #12805c; --ok-bg: #e7f6ef; --warn: #b54708; --warn-bg: #fef0e6;
+    --bad: #b42318; --bad-bg: #fdecea; --free: #6941c6; --free-bg: #f1ecfd;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 24px; display: flex; align-items: center; gap: 24px; }
+  header h1 { font-size: 18px; margin: 0; }
+  nav button { background: none; border: 0; padding: 8px 12px; font: inherit; color: var(--muted); cursor: pointer; border-radius: 6px; }
+  nav button.active { color: var(--accent); background: #eaf1ff; font-weight: 600; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 24px 60px; }
+  .hidden { display: none !important; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  input, select { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  input[type=search] { min-width: 240px; }
+  button.btn { font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  button.btn:hover { border-color: #c6cbd4; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { color: var(--bad); }
+  button:disabled { opacity: .5; cursor: default; }
+  .summary { color: var(--muted); margin-left: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  td.model { font-family: ui-monospace, Consolas, monospace; font-size: 13px; word-break: break-all; }
+  td.err { color: var(--muted); font-size: 12px; max-width: 320px; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .s-pass { background: var(--ok-bg); color: var(--ok); }
+  .s-limit { background: var(--warn-bg); color: var(--warn); }
+  .s-bad { background: var(--bad-bg); color: var(--bad); }
+  .s-other { background: #f2f4f7; color: var(--muted); }
+  .free { background: var(--free-bg); color: var(--free); }
+  .rank { background: #fff4d6; color: #93650a; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card h3 { margin: 0 0 4px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .muted { color: var(--muted); }
+  .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px; margin: 10px 0; font-size: 13px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+  .kv code { word-break: break-all; }
+  .stats { display: flex; gap: 14px; margin: 8px 0; font-size: 13px; }
+  .stats b { font-size: 16px; display: block; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  form.edit { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  label.check { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+  #refreshBox { margin-bottom: 14px; }
+  #toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; border-radius: 8px; background: var(--text); color: #fff; opacity: 0; transition: opacity .2s; max-width: 420px; }
+  #toast.show { opacity: .95; }
+  #toast.error { background: var(--bad); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .chat { display: flex; flex-direction: column; padding: 0; }
+  #chatThread { height: calc(100vh - 290px); min-height: 260px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 78%; padding: 9px 13px; border-radius: 12px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.assistant { align-self: flex-start; background: #f2f4f7; border-bottom-left-radius: 4px; }
+  .msg.error { align-self: flex-start; background: var(--bad-bg); color: var(--bad); }
+  .msg.pending { align-self: flex-start; color: var(--muted); font-style: italic; }
+  .msg .meta { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); white-space: normal; }
+  .chat-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+  .chat-input textarea { flex: 1; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; resize: vertical; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Free LLM Models</h1>
+  <nav>
+    <button data-tab="models" class="active">Modèles</button>
+    <button data-tab="providers">Fournisseurs</button>
+    <button data-tab="chat">Chat</button>
+  </nav>
+</header>
+
+<main>
+  <div id="refreshBox" class="card hidden">
+    <div id="refreshText"></div>
+    <div class="progress"><div id="refreshBar"></div></div>
+  </div>
+
+  <section id="tab-models">
+    <div class="toolbar">
+      <select id="fProvider"><option value="">Tous les fournisseurs</option></select>
+      <select id="fStatus"><option value="">Tous les statuts</option></select>
+      <label class="check"><input type="checkbox" id="fFree"> Gratuit vérifié seulement</label>
+      <input type="search" id="fText" placeholder="Rechercher un modèle…">
+      <span class="summary" id="modelSummary"></span>
+    </div>
+    <table>
+      <thead><tr><th>Rang</th><th>Fournisseur</th><th>Modèle</th><th>Statut</th><th>Gratuité</th><th>Intelligence</th><th>Latence</th><th>Vérifié le</th><th>Erreur</th></tr></thead>
+      <tbody id="modelRows"></tbody>
+    </table>
+    <p class="note" id="rankingNote"></p>
+    <p class="note">PASS = le modèle a répondu au test. Cela ne prouve pas qu'il est gratuit : seule la mention « gratuit vérifié » l'indique.</p>
+  </section>
+
+  <section id="tab-providers" class="hidden">
+    <div class="grid" id="providerCards"></div>
+
+    <div class="card" style="margin-top:18px; max-width:560px">
+      <h3>Ajouter un fournisseur compatible OpenAI</h3>
+      <p class="muted" style="margin:0">L'API doit exposer <code>/models</code> et <code>/chat/completions</code>.</p>
+      <form id="addForm" class="edit" autocomplete="off">
+        <input name="name" placeholder="Nom (ex. together)" required pattern="[a-z0-9][a-z0-9_\-]{1,31}">
+        <input name="host" placeholder="Host (ex. https://api.together.xyz/v1)" required>
+        <input name="api_key" type="password" placeholder="Clé API" autocomplete="new-password">
+        <div><button class="btn primary" type="submit">Ajouter</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="tab-chat" class="hidden">
+    <div class="toolbar">
+      <select id="chatModel" style="min-width:420px; max-width:100%"></select>
+      <label class="check"><input type="checkbox" id="chatUnverified"> Accepter un coût possible (modèles non vérifiés)</label>
+      <button class="btn" id="chatReset" type="button">Nouvelle conversation</button>
+    </div>
+    <div class="card chat">
+      <div id="chatThread">
+        <p class="muted" id="chatEmpty">Choisissez un modèle (ou Auto) et écrivez un message. Le modèle reçoit toute la conversation.</p>
+      </div>
+      <form id="chatForm" class="chat-input">
+        <textarea id="chatInput" rows="2" placeholder="Votre message… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)"></textarea>
+        <button class="btn primary" id="chatSend" type="submit">Envoyer</button>
+      </form>
+    </div>
+    <p class="note">La conversation reste dans ce navigateur (perdue au rechargement). Seuls les derniers messages sont envoyés (CHAT_HISTORY_MAX dans .env).</p>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const API = '/api/v1';
+let models = [], settings = [], stats = {}, pollTimer = null;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = s => s ? new Date(s).toLocaleString('fr-FR') : '—';
+
+async function api(path, options = {}) {
+  const opts = { ...options, headers: { 'Content-Type': 'application/json' } };
+  if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const d = data.detail;
+    const err = new Error(typeof d === 'string' ? d : (d?.message || JSON.stringify(d) || res.statusText));
+    err.status = res.status; err.detail = d;
+    throw err;
+  }
+  return data;
+}
+
+function toast(msg, error = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (error ? ' error' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.className = '', 3500);
+}
+
+function statusClass(s) {
+  if (s === 'PASS') return 's-pass';
+  if (s === 'RATE_LIMIT' || s === 'TIMEOUT') return 's-limit';
+  if (['ACCESS_DENIED', 'PAYMENT_REQUIRED', 'API_ERROR', 'NETWORK_ERROR', 'INVALID_RESPONSE', 'ERROR'].includes(s)) return 's-bad';
+  return 's-other';
+}
+
+/* ---------------------------------------------------------------- Modèles */
+
+function renderFilters() {
+  const pSel = document.getElementById('fProvider'), sSel = document.getElementById('fStatus');
+  const keepP = pSel.value, keepS = sSel.value;
+  pSel.innerHTML = '<option value="">Tous les fournisseurs</option>' +
+    settings.map(p => `<option>${esc(p.name)}</option>`).join('');
+  const statuses = [...new Set(models.map(m => m.status))].sort();
+  sSel.innerHTML = '<option value="">Tous les statuts</option>' +
+    statuses.map(s => `<option>${esc(s)}</option>`).join('');
+  pSel.value = keepP; sSel.value = keepS;
+}
+
+function renderModels() {
+  const p = document.getElementById('fProvider').value;
+  const s = document.getElementById('fStatus').value;
+  const freeOnly = document.getElementById('fFree').checked;
+  const q = document.getElementById('fText').value.trim().toLowerCase();
+  const rows = models.filter(m => (!p || m.provider === p) && (!s || m.status === s)
+    && (!freeOnly || m.free_status === 'verified_zero_price')
+    && (!q || m.model_id.toLowerCase().includes(q)));
+  document.getElementById('modelSummary').textContent =
+    `${rows.length} / ${models.length} modèles · ${models.filter(m => m.status === 'PASS').length} PASS`;
+  document.getElementById('modelRows').innerHTML = rows.map(m => `
+    <tr>
+      <td>${m.rank == null ? '<span class="muted">—</span>' : m.rank <= 3 ? `<span class="badge rank">${m.rank}</span>` : m.rank}</td>
+      <td>${esc(m.provider)}</td>
+      <td class="model">${esc(m.model_id)}</td>
+      <td><span class="badge ${statusClass(m.status)}">${esc(m.status)}</span></td>
+      <td>${m.free_status === 'verified_zero_price' ? '<span class="badge free">gratuit vérifié</span>' : '<span class="muted">non vérifié</span>'}</td>
+      <td>${m.intelligence_score != null ? m.intelligence_score : '<span class="muted">—</span>'}</td>
+      <td>${m.latency_seconds != null ? m.latency_seconds.toFixed(2) + ' s' : '—'}</td>
+      <td>${fmtDate(m.last_verified_at)}</td>
+      <td class="err">${esc((m.error || '').slice(0, 160))}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="muted">Aucun modèle.</td></tr>';
+}
+
+/* ----------------------------------------------------------- Fournisseurs */
+
+const sourceLabel = { database: 'base (page web)', env: 'fichier .env', none: 'aucune' };
+
+function renderProviders() {
+  document.getElementById('providerCards').innerHTML = settings.map(p => {
+    const st = stats[p.name] || { total: 0, passed: 0, verified_free: 0 };
+    const custom = p.kind !== 'builtin';
+    return `
+    <div class="card" data-name="${esc(p.name)}">
+      <h3>${esc(p.name)}
+        <span class="badge ${p.configured ? 's-pass' : 's-other'}">${p.configured ? 'configuré' : 'non configuré'}</span>
+        ${custom ? '<span class="badge free">ajouté</span>' : ''}</h3>
+      <div class="stats">
+        <div><b>${st.total}</b><span class="muted">modèles</span></div>
+        <div><b>${st.passed}</b><span class="muted">PASS</span></div>
+        <div><b>${st.verified_free}</b><span class="muted">gratuits vérifiés</span></div>
+      </div>
+      <div class="kv">
+        <span>Host</span><code>${esc(p.host) || '—'}</code>
+        <span>Clé API</span><span>${p.key_set ? `<code>${esc(p.key_masked)}</code>` : '—'} <span class="muted">(${sourceLabel[p.key_source]})</span></span>
+        <span>Vérifié le</span><span>${fmtDate(st.last_verified_at)}</span>
+      </div>
+      <div class="actions">
+        <button class="btn" data-act="edit">Modifier</button>
+        ${p.key_source === 'database' ? '<button class="btn" data-act="clear">Effacer la clé (revenir à .env)</button>' : ''}
+        ${custom ? '<button class="btn danger" data-act="delete">Supprimer</button>' : ''}
+      </div>
+      <form class="edit hidden" autocomplete="off">
+        <input name="host" value="${esc(p.host)}" placeholder="Host">
+        <input name="api_key" type="password" placeholder="Nouvelle clé API (laisser vide pour ne pas changer)" autocomplete="new-password">
+        <div class="actions" style="margin:0">
+          <button class="btn primary" type="submit">Enregistrer</button>
+          <button class="btn" type="button" data-act="cancel">Annuler</button>
+        </div>
+      </form>
+      <div class="actions">
+        <label class="check"><input type="checkbox" data-role="unverified"> Accepter un coût possible (modèles non vérifiés gratuits)</label>
+        <button class="btn" data-act="test" ${p.configured ? '' : 'disabled'}>Tester ce fournisseur</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('providerCards').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const card = btn.closest('.card'), name = card.dataset.name, form = card.querySelector('form.edit');
+  try {
+    if (btn.dataset.act === 'edit') form.classList.remove('hidden');
+    if (btn.dataset.act === 'cancel') form.classList.add('hidden');
+    if (btn.dataset.act === 'clear') {
+      if (!confirm(`Effacer la clé enregistrée pour ${name} ? La clé du fichier .env sera utilisée si elle existe.`)) return;
+      await api(`/settings/providers/${encodeURIComponent(name)}`, { method: 'PUT', body: { api_key: '' } });
+      toast('Clé effacée.'); await loadAll();
+    }
+    if (btn.dataset.act === 'delete') {
+      if (!confirm(`Supprimer le fournisseur ${name} et ses modèles ?`)) return;
+      await api(`/settings/providers/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      toast('Fournisseur supprimé.'); await loadAll();
+    }
+    if (btn.dataset.act === 'test') {
+      const allow = card.querySelector('[data-role=unverified]').checked;
+      await api('/refresh', { method: 'POST', body: { provider: name, allow_unverified: allow } });
+      toast(`Test de ${name} lancé.`); pollRefresh();
+    }
+  } catch (err) { toast(err.message, true); }
+});
+
+document.getElementById('providerCards').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target, name = form.closest('.card').dataset.name;
+  const host = form.elements['host'], key = form.elements['api_key'];
+  const body = {};
+  if (host.value !== host.defaultValue) body.host = host.value;
+  if (key.value.trim()) body.api_key = key.value;
+  if (!Object.keys(body).length) { form.classList.add('hidden'); return; }
+  try {
+    await api(`/settings/providers/${encodeURIComponent(name)}`, { method: 'PUT', body });
+    toast('Enregistré.'); await loadAll();
+  } catch (err) { toast(err.message, true); }
+});
+
+document.getElementById('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, field = n => f.elements[n].value;
+  try {
+    await api('/settings/providers', { method: 'POST', body: { name: field('name'), host: field('host'), api_key: field('api_key') } });
+    f.reset(); toast('Fournisseur ajouté. Cliquez sur « Tester ce fournisseur » pour découvrir ses modèles.');
+    await loadAll();
+  } catch (err) { toast(err.message, true); }
+});
+
+/* ---------------------------------------------------------------- Refresh */
+
+async function pollRefresh() {
+  clearTimeout(pollTimer);
+  let r;
+  try { r = await api('/refresh/status'); } catch { return; }
+  const box = document.getElementById('refreshBox');
+  const pct = r.total ? Math.round(100 * r.completed / r.total) : (r.state === 'running' ? 5 : 100);
+  document.getElementById('refreshBar').style.width = pct + '%';
+  const errs = r.errors.map(x => `${x.provider} : ${x.error}`).join(' · ');
+  if (r.state === 'running') {
+    box.classList.remove('hidden');
+    document.getElementById('refreshText').innerHTML =
+      `Test en cours (${esc(r.provider || 'tous')}) : ${r.completed}/${r.total} — <span class="muted">${esc(r.current_model || '')}</span>`;
+    pollTimer = setTimeout(pollRefresh, 1500);
+    return;
+  }
+  if (!box.classList.contains('hidden')) {
+    document.getElementById('refreshText').innerHTML =
+      `Test terminé (${esc(r.state)}) : ${r.completed}/${r.total} modèles testés. ${errs ? '<span class="muted">' + esc(errs) + '</span>' : ''}`;
+    await loadAll();
+  }
+}
+
+/* ------------------------------------------------------------------- Chat */
+
+let chatModels = [], chatHistory = [], chatBusy = false;
+const thread = document.getElementById('chatThread');
+
+function renderChatModels() {
+  const sel = document.getElementById('chatModel'), keep = sel.value;
+  chatModels = models.filter(m => m.rank != null).sort((a, b) => a.rank - b.rank);
+  sel.innerHTML = '<option value="auto">Auto (meilleur modèle disponible, avec repli)</option>' +
+    chatModels.map((m, i) => `<option value="${i}">${m.rank} · ${esc(m.provider)} / ${esc(m.model_id)} ${
+      m.free_status === 'verified_zero_price' ? '(gratuit vérifié)' : '(non vérifié — coût possible)'}</option>`).join('');
+  if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+}
+
+function bubble(kind, text, meta) {
+  document.getElementById('chatEmpty')?.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ' + kind;
+  div.textContent = text;
+  if (meta) {
+    const m = document.createElement('span');
+    m.className = 'meta';
+    m.textContent = meta;
+    div.appendChild(m);
+  }
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+  return div;
+}
+
+function failedAttempts(attempts) {
+  const failed = (attempts || []).filter(a => a.status !== 'OK');
+  return failed.length ? ' · essais ratés : ' + failed.map(a => `${a.provider}/${a.model} (${a.status})`).join(', ') : '';
+}
+
+function chatErrorText(err) {
+  const d = err.detail;
+  if (d && d.attempts) return `${d.message}${failedAttempts(d.attempts)}`;
+  if (d && d.status) return `${d.status}${d.http_code ? ' (HTTP ' + d.http_code + ')' : ''} : ${d.error || ''}`;
+  return err.message;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput'), prompt = input.value.trim();
+  if (!prompt || chatBusy) return;
+  const choice = document.getElementById('chatModel').value;
+  const allow = document.getElementById('chatUnverified').checked;
+  chatBusy = true;
+  document.getElementById('chatSend').disabled = true;
+  input.value = '';
+  bubble('user', prompt);
+  const pending = bubble('pending', 'En attente de la réponse…');
+  const body = { prompt, history: chatHistory, allow_unverified: allow };
+  try {
+    let res;
+    if (choice === 'auto') {
+      res = await api('/chat/auto', { method: 'POST', body });
+    } else {
+      const m = chatModels[Number(choice)];
+      res = await api('/chat', { method: 'POST', body: { ...body, provider: m.provider, model: m.model_id } });
+    }
+    pending.remove();
+    const free = res.free_status === 'verified_zero_price' ? 'gratuit vérifié' : 'non vérifié';
+    bubble('assistant', res.answer,
+      `${res.provider} / ${res.model} · ${res.latency_seconds.toFixed(2)} s · ${free}${failedAttempts(res.attempts)}`);
+    chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: res.answer });
+  } catch (err) {
+    pending.remove();
+    bubble('error', chatErrorText(err), 'Ce message n\'a pas été ajouté à la conversation.');
+    input.value = prompt;
+  } finally {
+    chatBusy = false;
+    document.getElementById('chatSend').disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById('chatForm').addEventListener('submit', e => { e.preventDefault(); sendChat(); });
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+document.getElementById('chatReset').addEventListener('click', () => {
+  chatHistory = [];
+  thread.innerHTML = '<p class="muted" id="chatEmpty">Nouvelle conversation. Écrivez un message.</p>';
+});
+
+/* ------------------------------------------------------------- Chargement */
+
+async function loadAll() {
+  const [all, sets, provs] = await Promise.all([api('/models/all'), api('/settings/providers'), api('/providers')]);
+  models = all.models; settings = sets;
+  const labels = { free: 'gratuit vérifié', intelligence: 'intelligence', coding: 'score de code', latency: 'latence la plus faible' };
+  document.getElementById('rankingNote').textContent = 'Rang (modèles PASS uniquement, comme /top et /chat/auto) : '
+    + (all.ranking || []).map(k => labels[k] || k).join(', puis ') + ' — ordre réglable avec MODEL_RANKING dans .env.';
+  stats = Object.fromEntries(provs.map(p => [p.provider, p]));
+  renderFilters(); renderModels(); renderProviders(); renderChatModels();
+}
+
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + b.dataset.tab));
+}));
+['fProvider', 'fStatus', 'fFree', 'fText'].forEach(id =>
+  document.getElementById(id).addEventListener('input', renderModels));
+
+loadAll().then(pollRefresh).catch(err => toast(err.message, true));
+</script>
+</body>
+</html>
