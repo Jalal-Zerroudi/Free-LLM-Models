@@ -19,6 +19,30 @@ python test_openrouter.py
 python cli.py top --metric intelligence
 ```
 
+## Démarrage rapide (macOS / Linux)
+
+```bash
+git clone https://github.com/Jalal-Zerroudi/Free-LLM-Models.git
+cd Free-LLM-Models
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
+# Modifier .env avec vos propres clés API et ne jamais le commiter.
+python cli.py providers
+python cli.py discover
+python test_openrouter.py
+python cli.py top --metric intelligence
+```
+
+Pour lancer l'interface locale :
+
+```bash
+uvicorn api:app --host 127.0.0.1 --port 8000
+```
+
+Ouvrir ensuite http://127.0.0.1:8000/. La commande `deactivate` permet de quitter l'environnement virtuel.
+
 ## Tous les scripts
 
 - `test_openrouter.py`, `test_ollama.py`, `test_groq.py`, `test_gemini.py`
