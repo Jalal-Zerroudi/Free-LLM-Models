@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 *.pyc
@@ -8,3 +10,4 @@ results/*.json
 results/*.db
 results/*.db-*
 graphify-out/
+

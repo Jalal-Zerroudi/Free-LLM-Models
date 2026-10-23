@@ -202,6 +202,47 @@ python -m unittest discover -s tests -v
 `tests/test_api.py` et `tests/test_settings.py` utilisent une base SQLite temporaire et des
 fournisseurs simulés.
 
+## Données locales, sauvegarde et réinitialisation
+
+Le projet conserve plusieurs catégories de données locales :
+
+| Emplacement | Contenu | Sensibilité |
+|---|---|---|
+| `.env` et variantes locales | Clés API configurées par variables d’environnement | Secrets en clair |
+| `results/models.db` | Catalogue, historique des tests, refresh et réglages saisis dans la page | Peut contenir des clés API en clair |
+| `results/models.db-wal`, `results/models.db-shm` | Fichiers temporaires du mode WAL SQLite | Peuvent contenir des transactions récentes |
+| `results/*.csv`, `results/*.json` | Résultats et catalogues produits par la CLI | Métadonnées sur les modèles et erreurs expurgées |
+
+Les messages du chat ne sont pas enregistrés par le serveur : ils restent dans le navigateur. Les métadonnées des essais et les erreurs expurgées sont néanmoins ajoutées à SQLite.
+
+### Sauvegarder SQLite
+
+La commande suivante utilise l’API de sauvegarde cohérente de SQLite et fonctionne même si la base utilise le mode WAL :
+
+```bash
+python -c "import sqlite3; source=sqlite3.connect('results/models.db'); backup=sqlite3.connect('results/models-backup.db'); source.backup(backup); backup.close(); source.close()"
+```
+
+Le fichier de sauvegarde peut contenir les clés saisies dans la page. Il doit rester hors de Git, être protégé comme un secret et ne pas être envoyé dans un ticket ou une archive publique.
+
+### Réinitialiser l’état local
+
+Arrêtez d’abord l’API, puis supprimez la base et ses fichiers annexes.
+
+macOS / Linux :
+
+```bash
+rm -f results/models.db results/models.db-wal results/models.db-shm
+```
+
+PowerShell :
+
+```powershell
+Remove-Item results/models.db, results/models.db-wal, results/models.db-shm -ErrorAction SilentlyContinue
+```
+
+Au prochain démarrage, le schéma est recréé. Si des catalogues JSON ou résultats CSV locaux existent encore, ils peuvent être réimportés automatiquement dans une base vide. Supprimez-les également uniquement si vous souhaitez repartir sans aucun résultat local.
+
 ## Sources des API (docs officielles)
 
 - Groq: https://console.groq.com/docs/api-reference
@@ -217,3 +258,4 @@ fournisseurs simulés.
 
 Ne commitez **jamais** `.env` dans Git. Ne placez pas de clés API dans les scripts,
 les requêtes du navigateur ni un dépôt public.
+
