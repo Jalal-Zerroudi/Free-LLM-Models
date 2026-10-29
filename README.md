@@ -4,6 +4,20 @@ Projet Python multi-fournisseurs pour **découvrir** et **tester séquentielleme
 modèles conversationnels visibles dans les API de Groq, Gemini, Cerebras,
 SambaNova, Mistral, Cohere, OpenRouter et Ollama.
 
+## Prérequis
+
+- Python **3.10 ou version ultérieure** : le code utilise notamment les annotations `X | None` et les génériques natifs comme `list[str]` ;
+- `pip` pour installer les dépendances de `requirements.txt` ;
+- une clé API uniquement pour chaque fournisseur distant que vous souhaitez interroger. Ollama peut fonctionner sans clé lorsque son host est configuré sur une instance locale `http://localhost...`.
+
+Vérifiez la version avant de créer l'environnement virtuel :
+
+```text
+python --version
+```
+
+Sous Windows, `py --version` peut être utilisé à la place. Python 3.9 ou antérieur échouera dès l'analyse de certains fichiers.
+
 ## Démarrage rapide (PowerShell / Windows)
 
 ```powershell
