@@ -140,6 +140,8 @@ Routes associées : `GET/POST /api/v1/settings/providers`,
 > `--host 127.0.0.1` et ne l'exposez jamais sur le réseau. Le serveur refuse les noms d'hôte
 > autres que `127.0.0.1`/`localhost` et les écritures non JSON.
 
+L’hôte d’un fournisseur personnalisé doit être une URL de base `http://` ou `https://` sans identifiants intégrés, paramètres de requête, fragment ni espace. Un chemin de base, par exemple `https://proxy.example/v1`, reste accepté.
+
 ## API REST (SQLite)
 
 ```powershell

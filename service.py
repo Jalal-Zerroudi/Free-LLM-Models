@@ -10,6 +10,7 @@ import re
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 from typing import Any, Callable
 
 import core
@@ -76,8 +77,17 @@ def provider_view(name: str) -> dict:
 
 def _clean_host(host: str) -> str:
     host = host.strip().rstrip('/')
-    if not re.match(r'^https?://[^\s/]+', host):
-        raise ServiceError(422, 'Host must start with http:// or https://')
+    try:
+        parsed = urlsplit(host)
+        hostname = parsed.hostname
+    except ValueError:
+        hostname = None
+    if (parsed.scheme not in ('http', 'https') or not hostname
+            or parsed.username is not None or parsed.password is not None
+            or parsed.query or parsed.fragment or any(ch.isspace() for ch in host)):
+        raise ServiceError(
+            422,
+            'Host must be an http(s) base URL without credentials, query, fragment, or spaces')
     return host
 
 

@@ -88,10 +88,20 @@ class SettingsTest(unittest.TestCase):
         self.assertIsNone(db.get_model('together', 'm1'))
 
     def test_validation(self):
-        bad = [{'name': 'Bad Name', 'host': 'https://x.io'}, {'name': 'ok-name', 'host': 'ftp://x.io'},
-               {'name': 'groq', 'host': 'https://x.io'}]
+        bad = [
+            {'name': 'Bad Name', 'host': 'https://x.io'},
+            {'name': 'ok-name', 'host': 'ftp://x.io'},
+            {'name': 'with-space', 'host': 'https://x.io invalid'},
+            {'name': 'with-userinfo', 'host': 'https://user:pass@x.io'},
+            {'name': 'with-query', 'host': 'https://x.io?token=secret'},
+            {'name': 'with-fragment', 'host': 'https://x.io#section'},
+            {'name': 'groq', 'host': 'https://x.io'},
+        ]
         for body in bad:
-            self.assertIn(self.client.post('/api/v1/settings/providers', json=body).status_code, (409, 422))
+            with self.subTest(body=body):
+                self.assertIn(
+                    self.client.post('/api/v1/settings/providers', json=body).status_code,
+                    (409, 422))
         self.assertEqual(self.client.delete('/api/v1/settings/providers/groq').status_code, 400)
         self.assertEqual(self.client.put('/api/v1/settings/providers/nope', json={}).status_code, 404)
 
