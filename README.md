@@ -8,7 +8,7 @@ SambaNova, Mistral, Cohere, OpenRouter et Ollama.
 
 - Python **3.10 ou version ultérieure** : le code utilise notamment les annotations `X | None` et les génériques natifs comme `list[str]` ;
 - `pip` pour installer les dépendances de `requirements.txt` ;
-- une clé API uniquement pour chaque fournisseur distant que vous souhaitez interroger. Ollama peut fonctionner sans clé lorsque son host est configuré sur une instance locale `http://localhost...`.
+- une clé API uniquement pour chaque fournisseur distant que vous souhaitez interroger. Ollama peut fonctionner sans clé lorsque son host ne pointe pas vers le cloud officiel `https://ollama.com` (par exemple `http://localhost:11434` ou `http://127.0.0.1:11434`).
 
 Vérifiez la version avant de créer l'environnement virtuel :
 

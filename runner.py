@@ -22,7 +22,7 @@ def save_catalog(provider: str, models: list[Model]) -> None:
 def run_provider(provider: str, allow_unverified: bool = False,
                  discover_only: bool = False) -> list[Result]:
     host, key = config(provider)
-    if not key and not (provider == 'ollama' and host.startswith('http://localhost')):
+    if not key and not (provider == 'ollama' and not host.startswith('https://ollama.com')):
         print(f'[{provider}] SKIPPED: clé API absente', flush=True)
         return []
 
