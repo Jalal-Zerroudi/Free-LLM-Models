@@ -142,6 +142,24 @@ Routes associées : `GET/POST /api/v1/settings/providers`,
 
 L’hôte d’un fournisseur personnalisé doit être une URL de base `http://` ou `https://` sans identifiants intégrés, paramètres de requête, fragment ni espace. Un chemin de base, par exemple `https://proxy.example/v1`, reste accepté.
 
+## Limite de confiance des hosts configurés
+
+Modifier le host d’un fournisseur intégré ou ajouter un fournisseur compatible OpenAI change la destination des secrets et des données envoyées. L’application transmet au host configuré :
+
+- la clé API dans l’en-tête d’authentification (`Authorization: Bearer ...`, ou l’en-tête propre à Gemini) ;
+- les requêtes de découverte et de test des modèles ;
+- le prompt courant et l’historique fourni lors d’un chat.
+
+La validation de l’URL contrôle sa forme, mais ne prouve ni l’identité ni la fiabilité du serveur distant. Avant d’enregistrer un host :
+
+1. vérifier précisément le domaine et utiliser HTTPS pour tout serveur non local ;
+2. réserver HTTP aux services de boucle locale maîtrisés ;
+3. utiliser une clé dédiée, limitée et révocable plutôt qu’une clé de production réutilisée ;
+4. tester d’abord avec une clé temporaire et des prompts sans donnée confidentielle ;
+5. considérer qu’un proxy peut journaliser les clés, prompts, réponses et métadonnées.
+
+Supprimer un fournisseur de l’application ne révoque pas sa clé auprès du fournisseur et n’efface pas les journaux du serveur distant. En cas de host erroné ou compromis, révoquez ou faites tourner la clé auprès de son émetteur, effacez la valeur locale et vérifiez les journaux disponibles.
+
 ## API REST (SQLite)
 
 ```powershell
