@@ -107,6 +107,18 @@ python cli.py top --metric speed
 python cli.py top --metric intelligence --provider openrouter
 ```
 
+### Réseau et fichiers modifiés par la CLI
+
+| Commande | Appels aux fournisseurs | Effets locaux |
+|---|---|---|
+| `providers` | Aucun | Lit la configuration `.env` et les réglages SQLite ; le schéma de la base peut être initialisé si nécessaire. |
+| `discover` | Oui, catalogue de modèles uniquement | Écrit `results/models_<provider>.json` ; aucune requête de génération n’est envoyée. |
+| `test` | Oui, catalogue puis génération pour chaque modèle autorisé | Écrit le catalogue JSON, `results/results_<provider>.csv` et `results/results_all.csv`. |
+| `top` | Aucun | Lit uniquement les CSV déjà présents dans `results/` ; ne rafraîchit pas les résultats. |
+| `db-init` | Aucun | Crée ou met à niveau la base SQLite, puis importe les catalogues JSON et CSV existants si la table des modèles est vide. |
+
+Pour éviter un test involontaire de plusieurs fournisseurs, utilisez toujours `--provider <nom>` avec `discover` ou `test`. Sans ce filtre, la CLI parcourt tous les fournisseurs configurés séquentiellement.
+
 ## Page web
 
 ```powershell
