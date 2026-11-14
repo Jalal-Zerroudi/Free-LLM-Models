@@ -248,6 +248,18 @@ python -m unittest discover -s tests -v
 `tests/test_api.py` et `tests/test_settings.py` utilisent une base SQLite temporaire et des
 fournisseurs simulés.
 
+### Tests hors ligne ou essais réels
+
+| Commande | Réseau | Effets attendus |
+|---|---|---|
+| `python -m unittest discover -s tests -v` | Aucun appel réel aux fournisseurs | Exécute `test_core.py`, `test_runner.py`, `test_api.py` et `test_settings.py` avec mocks et bases temporaires. |
+| `python test_<provider>.py` | Appelle le catalogue puis les modèles autorisés du fournisseur | Nécessite sa configuration et écrit des fichiers JSON/CSV dans `results/`. |
+| `python test_all_providers.py` | Parcourt les huit fournisseurs intégrés et saute ceux qui ne sont pas configurés | Peut produire de nombreux appels et résultats locaux ; à réserver aux essais d'intégration volontaires. |
+
+Les scripts `test_*.py` placés à la racine sont donc des **smoke tests réseau**, pas
+la suite unitaire hors ligne. N'ajoutez `--allow-unverified` à ces scripts que si
+vous acceptez explicitement le risque de consommation de crédits décrit plus haut.
+
 ## Données locales, sauvegarde et réinitialisation
 
 Le projet conserve plusieurs catégories de données locales :
