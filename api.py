@@ -12,13 +12,14 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 import db
 import service
 from core import config, provider_names
 
 INDEX_HTML = Path(__file__).resolve().parent / 'static' / 'index.html'
+MAX_CHAT_TEXT_LENGTH = 20_000
 
 
 @asynccontextmanager
@@ -95,22 +96,46 @@ class RefreshOut(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Literal['user', 'assistant']
-    content: str
+    content: str = Field(min_length=1, max_length=MAX_CHAT_TEXT_LENGTH)
+
+    @field_validator('content')
+    @classmethod
+    def content_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('content must not be blank')
+        return value
 
 
 class ChatRequest(BaseModel):
     provider: str
     model: str
-    prompt: str = Field(min_length=1)
+    prompt: str = Field(min_length=1, max_length=MAX_CHAT_TEXT_LENGTH)
     allow_unverified: bool = False
     history: list[ChatMessage] = []
+
+    @field_validator('prompt')
+    @classmethod
+    def prompt_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('prompt must not be blank')
+        return value
 
 
 class AutoChatRequest(BaseModel):
-    prompt: str = Field(min_length=1)
+    prompt: str = Field(min_length=1, max_length=MAX_CHAT_TEXT_LENGTH)
     provider: str | None = None
     allow_unverified: bool = False
     history: list[ChatMessage] = []
+
+    @field_validator('prompt')
+    @classmethod
+    def prompt_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError('prompt must not be blank')
+        return value
 
 
 class ChatOut(BaseModel):

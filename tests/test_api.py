@@ -147,6 +147,33 @@ class ApiTest(unittest.TestCase):
                                                    'prompt': 'x', 'history': [{'role': 'system', 'content': 'y'}]})
         self.assertEqual(r.status_code, 422)
 
+    def test_chat_rejects_blank_and_oversized_text_before_provider_call(self):
+        requests = [
+            ('/api/v1/chat', {'provider': 'openrouter', 'model': 'free-fast', 'prompt': '   '}),
+            ('/api/v1/chat/auto', {'prompt': 'x' * 20_001}),
+            ('/api/v1/chat/auto', {
+                'prompt': 'hello',
+                'history': [{'role': 'user', 'content': '\t\n'}],
+            }),
+        ]
+        with mock.patch.object(core, 'send_chat') as send:
+            for path, body in requests:
+                with self.subTest(path=path, body_keys=sorted(body)):
+                    self.assertEqual(self.client.post(path, json=body).status_code, 422)
+        send.assert_not_called()
+
+    def test_chat_strips_prompt_and_history_whitespace(self):
+        history = [{'role': 'user', 'content': '  question précédente  '}]
+        with mock.patch.object(core, 'send_chat',
+                               return_value=ChatReply('OK', 200, 'Hi', 0.3)) as send:
+            response = self.client.post('/api/v1/chat', json={
+                'provider': 'openrouter', 'model': 'free-fast',
+                'prompt': '  hello  ', 'history': history,
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(send.call_args.args[2], 'hello')
+        self.assertEqual(send.call_args.kwargs['history'][0]['content'], 'question précédente')
+
     def test_chat_auto_passes_history(self):
         history = [{'role': 'user', 'content': 'a'}, {'role': 'assistant', 'content': 'b'}]
         replies = [ChatReply('RATE_LIMIT', 429, '', 0.1, 'busy'), ChatReply('OK', 200, 'c', 0.3)]

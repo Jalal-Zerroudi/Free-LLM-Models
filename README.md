@@ -213,6 +213,9 @@ Règles :
   `CHAT_MAX_TOKENS`, `CHAT_HISTORY_MAX`, `LLM_DB_PATH`.
 - `/chat` et `/chat/auto` acceptent un champ optionnel `history` :
   `[{"role": "user"|"assistant", "content": "..."}]` (les `CHAT_HISTORY_MAX` derniers sont envoyés).
+- Le prompt et chaque message de l'historique sont nettoyés de leurs espaces en
+  début/fin, doivent contenir du texte et sont limités à 20 000 caractères. Une
+  requête invalide reçoit HTTP 422 avant tout appel à un fournisseur.
 
 Exemples (PowerShell) :
 
