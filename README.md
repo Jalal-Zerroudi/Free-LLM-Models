@@ -57,6 +57,24 @@ uvicorn api:app --host 127.0.0.1 --port 8000
 
 Ouvrir ensuite http://127.0.0.1:8000/. La commande `deactivate` permet de quitter l'environnement virtuel.
 
+## Configuration par variables d'environnement
+
+Le fichier `.env` situé à la racine du dépôt est chargé au démarrage. Copiez `.env.example`, ne renseignez que les fournisseurs utilisés et relancez le processus après toute modification.
+
+| Variables | Défaut | Rôle |
+|---|---|---|
+| `<FOURNISSEUR>_API_KEY` | vide | Clé du fournisseur intégré correspondant |
+| `<FOURNISSEUR>_HOST` | URL officielle inscrite dans `.env.example` | URL de base utilisée pour le catalogue et les requêtes |
+| `LLM_DB_PATH` | `results/models.db` | Emplacement de la base SQLite |
+| `MODEL_RANKING` | `free,intelligence,latency` | Ordre des critères pour `top` et `chat/auto` |
+| `CHAT_AUTO_MAX_ATTEMPTS` | `3` | Nombre maximal de modèles essayés par `chat/auto` |
+| `CHAT_MAX_TOKENS` | `1024` | Limite de génération demandée au fournisseur |
+| `CHAT_HISTORY_MAX` | `20` | Nombre maximal de messages précédents transmis au modèle |
+
+Remplacez `<FOURNISSEUR>` par `GROQ`, `GEMINI`, `CEREBRAS`, `SAMBANOVA`, `MISTRAL`, `COHERE`, `OPENROUTER` ou `OLLAMA`. Pour les trois limites numériques, une valeur non entière rétablit la valeur par défaut et une valeur inférieure à `1` est ramenée à `1`. Les critères inconnus de `MODEL_RANKING` sont ignorés ; si aucun critère reconnu ne reste, l'ordre par défaut est utilisé.
+
+Les réglages enregistrés depuis la page web dans SQLite restent prioritaires sur `.env`. Effacer une valeur saisie dans la page réactive donc la valeur du fichier, sans supprimer ni modifier `.env`.
+
 ## Tous les scripts
 
 - `test_openrouter.py`, `test_ollama.py`, `test_groq.py`, `test_gemini.py`
